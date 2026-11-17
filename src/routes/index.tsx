@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { analyze, optimize, type Analysis } from "@/lib/ats";
-import { FileSearch, FileText, Printer, ShieldCheck, Upload, Loader2 } from "lucide-react";
+import { FileSearch, FileText, Printer, ShieldCheck, Upload, Loader2, Eraser } from "lucide-react";
 import { extractResumeText } from "@/lib/import-resume";
 
 export const Route = createFileRoute("/")({
@@ -88,6 +88,9 @@ function Index() {
           </Button>
           <Button size="lg" variant="outline" disabled={!resume.trim()} onClick={() => setOutput(optimize(resume))}>
             <FileText /> Gerar currículo otimizado
+          </Button>
+          <Button size="lg" variant="ghost" disabled={!job && !resume && !output && !result} onClick={() => { setJob(""); setResume(""); setResult(null); setOutput(""); setImportMsg(null); }}>
+            <Eraser /> Limpar
           </Button>
         </div>
 
