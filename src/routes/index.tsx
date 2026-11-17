@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { analyze, optimize, type Analysis } from "@/lib/ats";
-import { FileSearch, FileText, Printer, ShieldCheck } from "lucide-react";
+import { FileSearch, FileText, Printer, ShieldCheck, Upload, Loader2 } from "lucide-react";
+import { extractResumeText } from "@/lib/import-resume";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,6 +28,24 @@ function Index() {
   const [resume, setResume] = useState("");
   const [result, setResult] = useState<Analysis | null>(null);
   const [output, setOutput] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setImporting(true);
+    setImportMsg(null);
+    try {
+      setResume(await extractResumeText(file));
+      setImportMsg({ ok: true, text: `Texto importado de "${file.name}". Revise antes de analisar.` });
+    } catch (err) {
+      setImportMsg({ ok: false, text: err instanceof Error && err.message ? err.message : "Não foi possível ler o arquivo." });
+    } finally {
+      setImporting(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-muted/40">
@@ -47,8 +66,19 @@ function Index() {
             <CardContent><Textarea value={job} onChange={(e) => setJob(e.target.value)} placeholder="Cole aqui a descrição da vaga..." className="min-h-64" /></CardContent>
           </Card>
           <Card>
-            <CardHeader><CardTitle className="text-base">Currículo original</CardTitle></CardHeader>
-            <CardContent><Textarea value={resume} onChange={(e) => setResume(e.target.value)} placeholder="Cole aqui o texto do seu currículo..." className="min-h-64" /></CardContent>
+            <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+              <CardTitle className="text-base">Currículo original</CardTitle>
+              <Button asChild variant="outline" size="sm" disabled={importing}>
+                <label className="cursor-pointer">
+                  {importing ? <Loader2 className="animate-spin" /> : <Upload />} Importar PDF/DOCX
+                  <input type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="sr-only" onChange={handleFile} disabled={importing} />
+                </label>
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Textarea value={resume} onChange={(e) => setResume(e.target.value)} placeholder="Cole aqui o texto do seu currículo ou importe um arquivo..." className="min-h-64" />
+              {importMsg && <p role="status" className={`text-sm ${importMsg.ok ? "text-muted-foreground" : "text-destructive"}`}>{importMsg.text}</p>}
+            </CardContent>
           </Card>
         </div>
 
